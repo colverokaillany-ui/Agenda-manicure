@@ -5,94 +5,376 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Agenda da Manicure</title>
+
 <style>
-:root{--bg:#f8f6f7;--card:#fff;--text:#302b30;--muted:#756d74;--primary:#9b5f78;--primary2:#7f4860;--line:#eadfe4;--ok:#4f8a67;--warn:#b27a31;--danger:#b45757}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-button,input,select,textarea{font:inherit}button{cursor:pointer}
-.app{display:flex;min-height:100vh}.side{width:235px;background:#fff;border-right:1px solid var(--line);padding:22px 15px;position:fixed;height:100vh}
-.brand{font-weight:800;font-size:20px;padding:8px 10px 22px}.brand small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:4px}
-.nav button{width:100%;border:0;background:transparent;text-align:left;padding:12px;border-radius:10px;margin:3px 0;color:#554c52}.nav button.active,.nav button:hover{background:#f4e9ee;color:var(--primary2);font-weight:700}
-.main{margin-left:235px;width:calc(100% - 235px);padding:26px;max-width:1500px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.title h1{margin:0;font-size:26px}.title p{margin:5px 0 0;color:var(--muted)}
-.btn{border:0;border-radius:10px;padding:10px 15px;background:var(--primary);color:#fff;font-weight:700}.btn.secondary{background:#f0e7eb;color:var(--primary2)}.btn.danger{background:#f8e7e7;color:var(--danger)}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}.stat span{color:var(--muted);font-size:13px}.stat strong{display:block;font-size:25px;margin-top:7px}
-.card{margin-top:16px}.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.toolbar .date{font-weight:800;min-width:190px;text-align:center}.agenda{margin-top:15px}.slot{display:grid;grid-template-columns:90px 1fr auto;align-items:center;gap:14px;padding:13px 8px;border-top:1px solid var(--line);min-height:62px}.slot:first-child{border-top:0}.time{font-weight:800;color:#655b62}.free{color:#a59ba1}.booking{display:flex;gap:10px;align-items:center}.pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700;background:#eee;color:#625b60}.pill.ok{background:#e7f3eb;color:var(--ok)}.pill.warn{background:#fff1dc;color:var(--warn)}.pill.danger{background:#f8e4e4;color:var(--danger)}
-.actions{display:flex;gap:7px}.icon{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px}
-.hidden{display:none!important}.section{display:none}.section.active{display:block}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-size:12px}
-.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700}.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff}.field textarea{min-height:80px;resize:vertical}.checkrow{display:flex;gap:8px;flex-wrap:wrap}.check{border:1px solid var(--line);padding:9px 11px;border-radius:9px;background:#fff}.check input{margin-right:6px}
-.modal{position:fixed;inset:0;background:rgba(35,28,32,.45);display:flex;align-items:center;justify-content:center;padding:15px;z-index:5}.modalbox{background:#fff;border-radius:16px;width:min(650px,100%);max-height:90vh;overflow:auto;padding:22px}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.modalhead h2{margin:0}.close{border:0;background:#f2ecef;border-radius:50%;width:34px;height:34px}.modalfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
-.filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:15px}.filters input,.filters select{padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff}
-#visaoAgenda{padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);font-weight:700}
-.weekgrid{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:8px;overflow-x:auto}
-.daycol{border:1px solid var(--line);border-radius:11px;background:#fff;min-width:105px}
-.dayhead{padding:10px;border-bottom:1px solid var(--line);font-weight:800;font-size:12px;text-align:center}
-.dayitems{padding:7px}.mini{padding:8px 5px;border-bottom:1px solid var(--line);font-size:12px}.mini:last-child{border-bottom:0}.mini b{display:block}.period-title{margin:18px 0 8px;font-size:16px}
-.mobile-card{display:none}
-.chart{height:250px;display:flex;align-items:end;gap:10px;padding:15px 4px 5px}.barwrap{height:100%;flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:6px}.bar{width:100%;max-width:55px;background:var(--primary);border-radius:7px 7px 2px 2px;min-height:3px}.barwrap small{font-size:11px;color:var(--muted)}.barwrap b{font-size:11px}
-.empty{text-align:center;color:var(--muted);padding:35px}
-@media(max-width:850px){
-body{padding-bottom:70px}.side{width:100%;height:64px;bottom:0;left:0;top:auto;padding:6px 8px;border-right:0;border-top:1px solid var(--line);z-index:10}
-.brand{display:none}.nav{display:flex;justify-content:space-around}.nav button{width:auto;margin:0;padding:8px 12px;text-align:center;font-size:18px}.nav span{display:block;font-size:10px;margin-top:1px}
-.main{margin-left:0;width:100%;padding:12px;max-width:none}.grid{grid-template-columns:1fr 1fr}.slot{grid-template-columns:65px 1fr}.slot>.actions{grid-column:2}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.top{align-items:flex-start}
-.top .title h1{font-size:22px}.top .title p{font-size:12px}.weekgrid{padding-bottom:5px}
+:root{
+  --bg:#f6f7fb;
+  --card:#fff;
+  --text:#252b36;
+  --muted:#778092;
+  --line:#e5e7ee;
+  --accent:#d95f8d;
+  --accent2:#f8e8ef;
+  --green:#27885d;
+  --red:#c94b4b;
 }
-@media(max-width:520px){
-.grid{grid-template-columns:1fr 1fr;gap:8px}.stat{padding:13px}.stat strong{font-size:19px}.stat span{font-size:11px}
-.slot{grid-template-columns:58px 1fr;padding:11px 3px}.booking{display:block}.booking .pill{margin-top:4px}.toolbar{gap:6px}.toolbar .date{min-width:auto;font-size:13px}
-.toolbar .btn{padding:8px 10px}.toolbar #visaoAgenda{max-width:92px;padding:8px}.card{padding:12px}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text)
 }
+.app{display:flex;min-height:100vh}
+.side{
+  width:230px;
+  background:#fff;
+  border-right:1px solid var(--line);
+  padding:22px 14px;
+  position:fixed;
+  height:100vh;
+  left:0;
+  top:0
+}
+.brand{
+  font-size:20px;
+  font-weight:800;
+  padding:4px 10px 22px
+}
+.brand small{
+  display:block;
+  font-size:12px;
+  font-weight:400;
+  color:var(--muted);
+  margin-top:5px
+}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav button{
+  border:0;
+  background:transparent;
+  color:#596174;
+  padding:12px 12px;
+  border-radius:10px;
+  text-align:left;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:700
+}
+.nav button:hover,.nav button.active{
+  background:var(--accent2);
+  color:var(--accent)
+}
+.main{
+  margin-left:230px;
+  width:calc(100% - 230px);
+  max-width:1400px;
+  padding:24px;
+  margin-right:auto
+}
+.section{display:none}
+.section.active{display:block}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px
+}
+h1{font-size:24px;margin:0}
+.sub{font-size:13px;color:var(--muted);margin-top:5px}
+.btn{
+  border:0;
+  border-radius:9px;
+  background:var(--accent);
+  color:#fff;
+  font-weight:700;
+  padding:10px 14px;
+  cursor:pointer
+}
+.btn.secondary{
+  background:#edf0f5;
+  color:#3d4654
+}
+.btn.danger{
+  background:#fff0f0;
+  color:var(--red)
+}
+.btn.green{
+  background:#e7f5ee;
+  color:var(--green)
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px
+}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.metric .label{font-size:13px;color:var(--muted)}
+.metric .value{font-size:25px;font-weight:800;margin-top:6px}
+.formgrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px
+}
+input,select,textarea{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:10px;
+  background:#fff;
+  font:inherit;
+  color:var(--text)
+}
+textarea{min-height:90px;resize:vertical}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  background:#fff
+}
+.row .title{font-weight:800}
+.row .small{font-size:12px;color:var(--muted);margin-top:4px}
+.empty{
+  padding:20px;
+  border:1px dashed var(--line);
+  border-radius:10px;
+  text-align:center;
+  color:var(--muted)
+}
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  margin-bottom:14px;
+  flex-wrap:wrap
+}
+.month-nav{display:flex;gap:8px;align-items:center}
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:7px
+}
+.weekday{
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+  color:var(--muted);
+  padding:6px
+}
+.day{
+  min-height:110px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:8px;
+  background:#fff;
+  cursor:pointer
+}
+.day.other{opacity:.45;background:#fafafa}
+.day.today{border:2px solid var(--accent)}
+.daynum{font-weight:800;margin-bottom:5px}
+.event{
+  font-size:11px;
+  padding:4px 5px;
+  margin-top:4px;
+  border-radius:6px;
+  background:var(--accent2);
+  color:#9d315c;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.week-list,.day-list{display:flex;flex-direction:column;gap:8px}
+.agenda-item{
+  display:grid;
+  grid-template-columns:90px 1fr auto;
+  gap:10px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  background:#fff
+}
+.time{font-weight:800;color:var(--accent)}
+.status{
+  font-size:12px;
+  font-weight:800;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#fff3e7;
+  color:#a35d00;
+  display:inline-block
+}
+.status.ok{background:#e7f5ee;color:var(--green)}
+.status.paid{background:#e8f0ff;color:#3b5bb5}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:20000;
+  padding:16px;
+  overflow:auto
+}
+.modal{
+  background:#fff;
+  max-width:650px;
+  margin:30px auto;
+  border-radius:16px;
+  padding:18px
+}
+.modal h2{margin-top:0}
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:14px
+}
+.finance-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.finance-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:15px
+}
+.finance-card .label{font-size:13px;color:var(--muted)}
+.finance-card .value{font-size:22px;font-weight:800;margin-top:7px}
 
 /* LOGIN E SINCRONIZAÇÃO */
-.sync-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px}
-.sync-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.sync-title{font-weight:800;font-size:16px}.sync-status{font-size:12px;color:var(--muted);margin-top:4px}
-.sync-login{display:flex;gap:8px;align-items:center;margin-top:12px}
-.sync-login input{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:180px}
-.sync-logged{display:none;margin-top:12px;align-items:center;justify-content:space-between;gap:10px}
+.sync-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:18px
+}
+.sync-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px
+}
+.sync-title{font-weight:800;font-size:16px}
+.sync-status{font-size:12px;color:var(--muted);margin-top:4px}
+.sync-login{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-top:12px
+}
+.sync-login input{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+  min-width:180px
+}
+.sync-logged{
+  display:none;
+  margin-top:12px;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px
+}
 
-/* MOBILE: menu no topo, com os nomes completos e sem barra inferior cobrindo os botões */
+/* MOBILE */
 @media(max-width:850px){
   body{padding-bottom:0!important}
   .app{display:block!important}
   .side{
-    position:sticky!important;top:0!important;left:auto!important;bottom:auto!important;
-    width:100%!important;height:auto!important;min-height:0!important;
-    padding:8px!important;border-right:0!important;border-bottom:1px solid var(--line)!important;
-    z-index:9999!important;pointer-events:auto!important
+    position:sticky!important;
+    top:0!important;
+    left:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:8px!important;
+    border-right:0!important;
+    border-bottom:1px solid var(--line)!important;
+    z-index:9999!important;
+    pointer-events:auto!important
   }
   .brand{display:none!important}
-  .nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;width:100%!important}
-  .nav button{
-    width:100%!important;margin:0!important;padding:10px 4px!important;
-    min-height:48px!important;text-align:center!important;font-size:15px!important;
-    position:relative!important;z-index:10000!important;pointer-events:auto!important;
-    touch-action:manipulation!important;-webkit-tap-highlight-color:rgba(0,0,0,.08)!important
+  .nav{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:4px!important;
+    width:100%!important
   }
-  .nav span{display:block!important;font-size:11px!important;margin-top:2px!important}
-  .main{margin-left:0!important;width:100%!important;padding:12px!important;max-width:none!important}
-  .sync-login{display:grid!important;grid-template-columns:1fr 1fr!important}
+  .nav button{
+    width:100%!important;
+    margin:0!important;
+    padding:10px 4px!important;
+    min-height:48px!important;
+    text-align:center!important;
+    font-size:13px!important;
+    position:relative!important;
+    z-index:10000!important;
+    pointer-events:auto!important;
+    touch-action:manipulation!important;
+    -webkit-tap-highlight-color:rgba(0,0,0,.08)!important
+  }
+  .main{
+    margin-left:0!important;
+    width:100%!important;
+    padding:12px!important;
+    max-width:none!important
+  }
+  .grid,.finance-grid{grid-template-columns:repeat(2,1fr)}
+  .formgrid{grid-template-columns:1fr 1fr}
+  .calendar{gap:3px}
+  .day{min-height:80px;padding:5px}
+  .event{font-size:9px;padding:3px}
+  .agenda-item{grid-template-columns:65px 1fr}
+  .agenda-item .actions{grid-column:1/-1}
+  .sync-login{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important
+  }
   .sync-login .btn{grid-column:1/-1!important}
-  .sync-login input{min-width:0!important;width:100%!important}
+  .sync-login input{
+    min-width:0!important;
+    width:100%!important
+  }
 }
 @media(max-width:430px){
-  .nav button{font-size:13px!important;padding:8px 2px!important}
-  .nav span{font-size:10px!important}
-  .sync-head{display:block}
+  .nav button{
+    font-size:12px!important;
+    padding:8px 2px!important
+  }
+  .grid,.finance-grid{grid-template-columns:1fr}
+  .formgrid{grid-template-columns:1fr}
+  .day{min-height:65px}
+  .event{display:none}
 }
-
 </style>
 </head>
+
 <body>
 <div class="app">
+
 <aside class="side">
-  <div class="brand">Agenda da Manicure<small>Organização dos atendimentos</small></div>
-  <nav class="nav">
-    <button class="active" data-section="agenda">▣ <span>Agenda</span></button>
-    <button data-section="clientes">♙ <span>Clientes</span></button>
-    <button data-section="financeiro">▤ <span>Financeiro</span></button>
-    <button data-section="servicos">✦ <span>Serviços</span></button>
-  </nav>
+  <div class="brand">
+    Agenda da Manicure
+    <small>Organização de clientes e horários</small>
+  </div>
+
+  <div class="nav">
+    <button type="button" class="active" data-section="agenda">Agenda</button>
+    <button type="button" data-section="clientes">Clientes</button>
+    <button type="button" data-section="financeiro">Financeiro</button>
+    <button type="button" data-section="servicos">Serviços</button>
+  </div>
 </aside>
+
 <main class="main">
 
 <div class="sync-card">
@@ -116,50 +398,100 @@ body{padding-bottom:70px}.side{width:100%;height:64px;bottom:0;left:0;top:auto;p
 </div>
 
 <section id="agenda" class="section active">
-<div class="top"><div class="title"><h1>Agenda</h1><p>Organize os horários sem esquecer nenhum atendimento.</p></div><button class="btn" onclick="novoAgendamento()">+ Agendar</button></div>
-<div class="grid">
-<div class="stat"><span>Atendimentos hoje</span><strong id="sHoje">0</strong></div>
-<div class="stat"><span>Confirmados</span><strong id="sConf">0</strong></div>
-<div class="stat"><span>Recebido hoje</span><strong id="sReceb">R$ 0,00</strong></div>
-<div class="stat"><span>Pendente</span><strong id="sPend">R$ 0,00</strong></div>
-</div>
-<div class="card">
-<div class="toolbar">
-<button class="btn secondary" onclick="moverDia(-1)">‹</button><div class="date" id="dataTitulo"></div><button class="btn secondary" onclick="moverDia(1)">›</button>
-<button class="btn secondary" onclick="irHoje()">Hoje</button>
-<select id="visaoAgenda" onchange="renderAgenda()" aria-label="Filtrar agenda">
-  <option value="dia">Dia</option>
-  <option value="semana">Semana</option>
-  <option value="mes">Mês</option>
-  <option value="ano">Ano</option>
-</select>
-</div>
-<div class="agenda" id="agendaLista"></div>
-</div>
+  <div class="topbar">
+    <div>
+      <h1>Agenda</h1>
+      <div class="sub">Organize os horários e acompanhe seus atendimentos.</div>
+    </div>
+    <button class="btn" type="button" onclick="abrirNovoAgendamento()">+ Agendamento</button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="month-nav">
+        <button class="btn secondary" type="button" onclick="moverDia(-1)">‹</button>
+        <strong id="tituloAgenda"></strong>
+        <button class="btn secondary" type="button" onclick="moverDia(1)">›</button>
+      </div>
+
+      <select id="visaoAgenda" onchange="renderAgenda()" style="max-width:180px">
+        <option value="dia">Dia</option>
+        <option value="semana">Semana</option>
+        <option value="mes">Mês</option>
+      </select>
+    </div>
+
+    <div id="conteudoAgenda"></div>
+  </div>
 </section>
 
 <section id="clientes" class="section">
-<div class="top"><div class="title"><h1>Clientes</h1><p>Os dados ficam salvos para facilitar os próximos agendamentos.</p></div><button class="btn" onclick="novoCliente()">+ Cliente</button></div>
-<div class="card"><div class="filters"><input id="buscaCliente" placeholder="Buscar por nome ou WhatsApp" oninput="renderClientes()"></div><div id="clientesTabela"></div></div>
+  <div class="topbar">
+    <div>
+      <h1>Clientes</h1>
+      <div class="sub">Cadastre e encontre suas clientes.</div>
+    </div>
+    <button class="btn" type="button" onclick="abrirNovoCliente()">+ Cliente</button>
+  </div>
+
+  <div class="card">
+    <input id="buscaCliente" placeholder="Buscar cliente..." oninput="renderClientes()">
+  </div>
+
+  <div id="listaClientes" class="rows"></div>
 </section>
 
 <section id="financeiro" class="section">
-<div class="top"><div class="title"><h1>Financeiro</h1><p>Acompanhe o que foi recebido e o que ainda está pendente.</p></div></div>
-<div class="filters"><select id="periodoFin" onchange="renderFinanceiro()"><option value="mes">Este mês</option><option value="semana">Esta semana</option><option value="ano">Este ano</option></select></div>
-<div class="grid">
-<div class="stat"><span>Atendimentos realizados</span><strong id="fAt">0</strong></div><div class="stat"><span>Recebido</span><strong id="fRec">R$ 0,00</strong></div><div class="stat"><span>Pendente</span><strong id="fPend">R$ 0,00</strong></div><div class="stat"><span>Ticket médio</span><strong id="fMed">R$ 0,00</strong></div>
-</div>
-<div class="card"><h3>Faturamento por período</h3><div class="chart" id="chart"></div></div>
-<div class="card"><h3>Formas de pagamento</h3><div id="formas"></div></div>
+  <div class="topbar">
+    <div>
+      <h1>Financeiro</h1>
+      <div class="sub">Resumo dos atendimentos realizados.</div>
+    </div>
+  </div>
+
+  <div class="finance-grid">
+    <div class="finance-card">
+      <div class="label">Agendado</div>
+      <div id="finAgendado" class="value">R$ 0,00</div>
+    </div>
+    <div class="finance-card">
+      <div class="label">Recebido</div>
+      <div id="finRecebido" class="value">R$ 0,00</div>
+    </div>
+    <div class="finance-card">
+      <div class="label">Pendente</div>
+      <div id="finPendente" class="value">R$ 0,00</div>
+    </div>
+    <div class="finance-card">
+      <div class="label">Atendimentos</div>
+      <div id="finQuantidade" class="value">0</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">Agendamentos</h3>
+    <div id="listaFinanceiro" class="rows"></div>
+  </div>
 </section>
 
 <section id="servicos" class="section">
-<div class="top"><div class="title"><h1>Serviços</h1><p>Cadastre os procedimentos e seus valores uma única vez.</p></div><button class="btn" onclick="novoServico()">+ Serviço</button></div>
-<div class="card"><div id="servicosTabela"></div></div>
-</section>
-</main></div>
+  <div class="topbar">
+    <div>
+      <h1>Serviços</h1>
+      <div class="sub">Cadastre os serviços e valores.</div>
+    </div>
+    <button class="btn" type="button" onclick="abrirNovoServico()">+ Serviço</button>
+  </div>
 
-<div class="modal hidden" id="modal"><div class="modalbox"><div class="modalhead"><h2 id="modalTitulo"></h2><button class="close" onclick="fecharModal()">×</button></div><div id="modalBody"></div><div class="modalfoot"><button class="btn secondary" onclick="fecharModal()">Cancelar</button><button class="btn" id="modalSalvar">Salvar</button></div></div></div>
+  <div id="listaServicos" class="rows"></div>
+</section>
+
+</main>
+</div>
+
+<div id="modalBg" class="modal-bg">
+  <div id="modal" class="modal"></div>
+</div>
 
 <script>
 const KEY="agenda_manicure_v1";
@@ -168,193 +500,1356 @@ const SUPABASE_ANON_KEY="sb_publishable_6rsJ3AszRnTqSJ74KbxB-w_BOIFntzf";
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 
 let db=JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"servicos":[],"agendamentos":[]}');
+
 if(!Array.isArray(db.clientes))db.clientes=[];
 if(!Array.isArray(db.servicos))db.servicos=[];
 if(!Array.isArray(db.agendamentos))db.agendamentos=[];
 
-let dia=new Date(); dia.setHours(0,0,0,0);
-const pad=n=>String(n).padStart(2,"0"), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const brDate=d=>new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(d);
-const money=v=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(v)||0);
+let dia=new Date();
+dia.setHours(0,0,0,0);
 
-function saveLocal(){localStorage.setItem(KEY,JSON.stringify(db))}
-function setSyncStatus(t){const e=document.getElementById("syncStatus");if(e)e.textContent=t}
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+const brDate=d=>new Intl.DateTimeFormat("pt-BR",{
+  weekday:"long",
+  day:"2-digit",
+  month:"long"
+}).format(d);
+
+const money=v=>new Intl.NumberFormat("pt-BR",{
+  style:"currency",
+  currency:"BRL"
+}).format(Number(v)||0);
+
+const gerarId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+
+function saveLocal(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+}
+
+function setSyncStatus(t){
+  const e=document.getElementById("syncStatus");
+  if(e)e.textContent=t;
+}
 
 async function save(){
   saveLocal();
+
   if(!sb)return;
+
   const {data:{user}}=await sb.auth.getUser();
+
   if(!user)return;
+
   setSyncStatus("Sincronizando...");
-  const {error}=await sb.from("agenda_manicure_data").upsert(
-    {user_id:user.id,data:db,updated_at:new Date().toISOString()},
-    {onConflict:"user_id"}
-  );
+
+  const {error}=await sb
+    .from("agenda_manicure_data")
+    .upsert(
+      {
+        user_id:user.id,
+        data:db,
+        updated_at:new Date().toISOString()
+      },
+      {onConflict:"user_id"}
+    );
+
   setSyncStatus(error?"Erro ao sincronizar":"Sincronizado");
 }
 
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[m]));
+}
 
 function showSection(id){
+
   const target=document.getElementById(id);
+
   if(!target)return;
+
   document.querySelectorAll(".section").forEach(x=>{
     x.classList.remove("active");
     x.style.display="none";
   });
+
   target.classList.add("active");
   target.style.display="block";
+
   document.querySelectorAll(".nav button[data-section]").forEach(x=>{
     x.classList.toggle("active",x.dataset.section===id);
   });
+
   if(id==="agenda")renderAgenda();
   if(id==="clientes")renderClientes();
   if(id==="servicos")renderServicos();
   if(id==="financeiro")renderFinanceiro();
+
   window.scrollTo({top:0,behavior:"instant"});
 }
 
-/* Delegação de eventos: funciona melhor no Safari/iPhone do que depender apenas do onclick */
+/* Navegação compatível com computador e celular */
 document.addEventListener("click",function(e){
+
   const b=e.target.closest && e.target.closest(".nav button[data-section]");
+
   if(!b)return;
+
   e.preventDefault();
+
   showSection(b.dataset.section);
+
 },true);
 
 document.addEventListener("touchend",function(e){
+
   const b=e.target.closest && e.target.closest(".nav button[data-section]");
+
   if(!b)return;
+
   e.preventDefault();
+
   showSection(b.dataset.section);
+
 },{capture:true,passive:false});
 
 async function loginAgenda(){
-  if(!sb){alert("Não foi possível carregar a conexão.");return}
+
+  if(!sb){
+    alert("Não foi possível carregar a conexão.");
+    return;
+  }
+
   const email=document.getElementById("loginEmail").value.trim();
   const password=document.getElementById("loginPassword").value;
-  if(!email||!password){alert("Informe o e-mail e a senha.");return}
+
+  if(!email||!password){
+    alert("Informe o e-mail e a senha.");
+    return;
+  }
+
   setSyncStatus("Entrando...");
-  const {data,error}=await sb.auth.signInWithPassword({email,password});
-  if(error){alert(error.message);setSyncStatus("Falha no login");return}
+
+  const {data,error}=await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    alert(error.message);
+    setSyncStatus("Falha no login");
+    return;
+  }
+
   await afterLoginAgenda(data.user);
 }
 
 async function afterLoginAgenda(user){
+
   document.getElementById("loginArea").style.display="none";
   document.getElementById("loggedArea").style.display="flex";
   document.getElementById("loggedEmail").textContent=user.email;
+
   setSyncStatus("Carregando dados...");
-  const {data,error}=await sb.from("agenda_manicure_data").select("data").eq("user_id",user.id).maybeSingle();
-  if(error){setSyncStatus("Erro ao carregar");return}
+
+  const {data,error}=await sb
+    .from("agenda_manicure_data")
+    .select("data")
+    .eq("user_id",user.id)
+    .maybeSingle();
+
+  if(error){
+    setSyncStatus("Erro ao carregar");
+    return;
+  }
+
   if(data && data.data){
+
     db=data.data;
+
     if(!Array.isArray(db.clientes))db.clientes=[];
     if(!Array.isArray(db.servicos))db.servicos=[];
     if(!Array.isArray(db.agendamentos))db.agendamentos=[];
+
     saveLocal();
+
   }else{
+
     await save();
+
   }
-  renderAgenda();renderClientes();renderServicos();renderFinanceiro();
+
+  renderAgenda();
+  renderClientes();
+  renderServicos();
+  renderFinanceiro();
+
   setSyncStatus("Sincronizado");
 }
 
 async function logoutAgenda(){
+
   if(sb)await sb.auth.signOut();
+
   document.getElementById("loginArea").style.display="grid";
   document.getElementById("loggedArea").style.display="none";
+
   setSyncStatus("Não conectado");
 }
 
 async function initAgendaAuth(){
-  if(!sb)return;
-  const {data:{session}}=await sb.auth.getSession();
-  if(session)await afterLoginAgenda(session.user);
-}
-function moverDia(n){
- const view=document.getElementById("visaoAgenda")?.value||"dia";
- if(view==="semana") dia.setDate(dia.getDate()+7*n);
- else if(view==="mes") dia.setMonth(dia.getMonth()+n);
- else if(view==="ano") dia.setFullYear(dia.getFullYear()+n);
- else dia.setDate(dia.getDate()+n);
- renderAgenda();
-}
-function irHoje(){dia=new Date();dia.setHours(0,0,0,0);renderAgenda()}
-function slots(){let out=[];for(let h=8;h<=18;h++){for(let m of [0,30]){if(h===18&&m>0)continue;out.push(`${pad(h)}:${pad(m)}`)}}return out}
 
-function formatShortDate(d){return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d)}
-function inicioSemana(d){let x=new Date(d);let day=x.getDay()||7;x.setDate(x.getDate()-day+1);x.setHours(0,0,0,0);return x}
-function renderAgendaPeriodo(){
- const view=document.getElementById("visaoAgenda")?.value||"dia";
- const container=document.getElementById("agendaLista");
- const base=new Date(dia); base.setHours(0,0,0,0);
- if(view==="dia"){renderAgendaDia();return}
- if(view==="semana"){
-   const ini=inicioSemana(base), days=[];
-   for(let i=0;i<7;i++){let d=new Date(ini);d.setDate(ini.getDate()+i);days.push(d)}
-   document.getElementById("dataTitulo").textContent=`Semana de ${formatShortDate(days[0])} a ${formatShortDate(days[6])}`;
-   container.innerHTML=`<div class="weekgrid">${days.map(d=>{
-     const arr=db.agendamentos.filter(a=>a.data===iso(d)).sort((a,b)=>a.horario.localeCompare(b.horario));
-     return `<div class="daycol"><div class="dayhead">${new Intl.DateTimeFormat("pt-BR",{weekday:"short"}).format(d).replace(".","")}<br>${formatShortDate(d)}</div><div class="dayitems">${arr.length?arr.map(a=>`<div class="mini"><b>${a.horario} · ${esc(a.clienteNome)}</b>${esc(a.servicoNome)}<br>${money(a.valor)}</div>`).join(""):`<div class="mini free">Livre</div>`}</div></div>`
-   }).join("")}</div>`;
-   return;
- }
- if(view==="mes"){
-   document.getElementById("dataTitulo").textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(base);
-   const ym=iso(base).slice(0,7);
-   const arr=db.agendamentos.filter(a=>a.data.startsWith(ym)).sort((a,b)=>(a.data+a.horario).localeCompare(b.data+b.horario));
-   container.innerHTML=arr.length?arr.map(a=>`<div class="slot"><div class="time">${a.data.slice(8)}<br>${a.horario}</div><div class="booking"><div><b>${esc(a.clienteNome)}</b><div class="free">${esc(a.servicoNome)} · ${money(a.valor)}</div></div><span class="pill ${a.confirmacao==="Confirmada"?"ok":a.confirmacao==="Cancelada"?"danger":"warn"}">${esc(a.confirmacao)}</span></div><div class="actions"><button class="icon" onclick="editarAgendamento('${a.id}')">Editar</button></div></div>`).join(""):`<div class="empty">Nenhum agendamento neste mês.</div>`;
-   return;
- }
- document.getElementById("dataTitulo").textContent=base.getFullYear();
- const arr=db.agendamentos.filter(a=>a.data.startsWith(String(base.getFullYear()))).sort((a,b)=>(a.data+a.horario).localeCompare(b.data+b.horario));
- container.innerHTML=arr.length?arr.map(a=>`<div class="slot"><div class="time">${a.data.slice(5)}<br>${a.horario}</div><div class="booking"><div><b>${esc(a.clienteNome)}</b><div class="free">${esc(a.servicoNome)} · ${money(a.valor)}</div></div><span class="pill ${a.confirmacao==="Confirmada"?"ok":a.confirmacao==="Cancelada"?"danger":"warn"}">${esc(a.confirmacao)}</span></div><div class="actions"><button class="icon" onclick="editarAgendamento('${a.id}')">Editar</button></div></div>`).join(""):`<div class="empty">Nenhum agendamento neste ano.</div>`;
+  if(!sb)return;
+
+  const {data:{session}}=await sb.auth.getSession();
+
+  if(session){
+    await afterLoginAgenda(session.user);
+  }
 }
-function renderAgendaDia(){
- document.getElementById("dataTitulo").textContent=brDate(dia);
- const d=iso(dia), list=db.agendamentos.filter(a=>a.data===d).sort((a,b)=>a.horario.localeCompare(b.horario));
- const by=Object.fromEntries(list.map(a=>[a.horario,a]));
- // Mostra os horários-base e também qualquer horário personalizado já agendado.
- const allTimes=[...new Set([...slots(),...list.map(a=>a.horario)])].sort();
- document.getElementById("agendaLista").innerHTML=allTimes.map(t=>{let a=by[t];return `<div class="slot"><div class="time">${t}</div>${a?`<div class="booking"><div><b>${esc(a.clienteNome)}</b><div class="free">${esc(a.servicoNome)} · ${money(a.valor)}</div></div><span class="pill ${a.confirmacao==="Confirmada"?"ok":a.confirmacao==="Cancelada"?"danger":"warn"}">${esc(a.confirmacao)}</span></div><div class="actions"><button class="icon" onclick="editarAgendamento('${a.id}')">Editar</button></div>`:`<div class="free">Horário disponível</div><div class="actions"><button class="icon" onclick="novoAgendamento('${t}')">+ Marcar</button></div>`}</div>`}).join("");
- updateStats(list);
+
+function moverDia(n){
+
+  const visao=document.getElementById("visaoAgenda").value;
+
+  if(visao==="mes"){
+    dia.setMonth(dia.getMonth()+n);
+  }else if(visao==="semana"){
+    dia.setDate(dia.getDate()+(7*n));
+  }else{
+    dia.setDate(dia.getDate()+n);
+  }
+
+  renderAgenda();
 }
-function renderAgenda(){renderAgendaPeriodo()}
-function updateStats(list){document.getElementById("sHoje").textContent=list.length;document.getElementById("sConf").textContent=list.filter(a=>a.confirmacao==="Confirmada").length;document.getElementById("sReceb").textContent=money(list.filter(a=>a.pagamento==="Pago"&&a.status!=="Cancelado").reduce((s,a)=>s+Number(a.valor),0));document.getElementById("sPend").textContent=money(list.filter(a=>a.pagamento!=="Pago"&&a.status!=="Cancelado").reduce((s,a)=>s+Number(a.valor),0))}
-function modal(t,body,savefn){document.getElementById("modalTitulo").textContent=t;document.getElementById("modalBody").innerHTML=body;document.getElementById("modalSalvar").onclick=savefn;document.getElementById("modal").classList.remove("hidden")}
-function fecharModal(){document.getElementById("modal").classList.add("hidden")}
-function novoCliente(){modal("Nova cliente",`<div class="formgrid"><div class="field"><label>Nome completo</label><input id="cNome"></div><div class="field"><label>WhatsApp / telefone</label><input id="cTel" placeholder="(55) 99999-9999"></div></div>`,()=>{let n=document.getElementById("cNome").value.trim(),t=document.getElementById("cTel").value.trim();if(!n){alert("Informe o nome.");return}db.clientes.push({id:crypto.randomUUID(),nome:n,telefone:t});save();fecharModal();renderClientes()})}
-function renderClientes(){let q=(document.getElementById("buscaCliente")?.value||"").toLowerCase();let arr=db.clientes.filter(c=>(c.nome+" "+c.telefone).toLowerCase().includes(q));document.getElementById("clientesTabela").innerHTML=arr.length?`<table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Atendimentos</th><th></th></tr></thead><tbody>${arr.map(c=>`<tr><td><b>${esc(c.nome)}</b></td><td>${esc(c.telefone)}</td><td>${db.agendamentos.filter(a=>a.clienteId===c.id).length}</td><td><button class="icon" onclick="editarCliente('${c.id}')">Editar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhuma cliente cadastrada.</div>`}
-function editarCliente(id){let c=db.clientes.find(x=>x.id===id);modal("Editar cliente",`<div class="formgrid"><div class="field"><label>Nome completo</label><input id="cNome" value="${esc(c.nome)}"></div><div class="field"><label>WhatsApp / telefone</label><input id="cTel" value="${esc(c.telefone)}"></div></div>`,()=>{c.nome=document.getElementById("cNome").value.trim();c.telefone=document.getElementById("cTel").value.trim();db.agendamentos.forEach(a=>{if(a.clienteId===id)a.clienteNome=c.nome});save();fecharModal();renderClientes()})}
-function novoServico(){modal("Novo serviço",`<div class="formgrid"><div class="field"><label>Nome do procedimento</label><input id="svNome" placeholder="Ex.: Pé"></div><div class="field"><label>Valor</label><input id="svValor" type="number" min="0" step=".01" placeholder="40,00"></div></div>`,()=>{let n=document.getElementById("svNome").value.trim(),v=Number(document.getElementById("svValor").value);if(!n){alert("Informe o serviço.");return}db.servicos.push({id:crypto.randomUUID(),nome:n,valor:v});save();fecharModal();renderServicos()})}
-function renderServicos(){document.getElementById("servicosTabela").innerHTML=db.servicos.length?`<table><thead><tr><th>Procedimento</th><th>Valor atual</th><th></th></tr></thead><tbody>${db.servicos.map(s=>`<tr><td><b>${esc(s.nome)}</b></td><td>${money(s.valor)}</td><td><button class="icon" onclick="editarServico('${s.id}')">Editar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Cadastre os procedimentos que sua mãe mais usa.</div>`}
-function editarServico(id){let s=db.servicos.find(x=>x.id===id);modal("Editar serviço",`<div class="formgrid"><div class="field"><label>Nome</label><input id="svNome" value="${esc(s.nome)}"></div><div class="field"><label>Valor</label><input id="svValor" type="number" min="0" step=".01" value="${s.valor}"></div></div>`,()=>{s.nome=document.getElementById("svNome").value.trim();s.valor=Number(document.getElementById("svValor").value);save();fecharModal();renderServicos()})}
-function novoAgendamento(horario=""){let data=iso(dia);let ocupados=db.agendamentos.filter(a=>a.data===data).map(a=>a.horario);let opts=db.clientes.map(c=>`<option value="${c.id}">${esc(c.nome)} — ${esc(c.telefone)}</option>`).join("");let sv=db.servicos.map(s=>`<option value="${s.id}">${esc(s.nome)} — ${money(s.valor)}</option>`).join("");modal("Novo agendamento",`<div class="formgrid"><div class="field"><label>Cliente</label><select id="aCliente"><option value="">Selecione uma cliente</option>${opts}</select><small style="color:#756d74">A cliente já cadastrada terá o WhatsApp preenchido automaticamente.</small></div><div class="field"><label>Horário</label><input id="aHora" type="time" step="60" value="${horario}"><small style="color:#756d74">Você pode escolher qualquer horário, como 08:15, 08:45 ou 09:10.</small></div><div class="field"><label>Procedimento</label><select id="aServico" onchange="puxarValor()"><option value="">Selecione</option>${sv}</select></div><div class="field"><label>Valor</label><input id="aValor" type="number" min="0" step=".01"></div><div class="field"><label>Confirmação</label><select id="aConf"><option>A confirmar</option><option>Confirmada</option><option>Cancelada</option></select></div><div class="field"><label>Pagamento</label><select id="aPag"><option>Pendente</option><option>Pago</option></select></div><div class="field"><label>Forma de pagamento</label><select id="aForma"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option></select></div><div class="field full"><label>Observações</label><textarea id="aObs" placeholder="Ex.: esmalte vermelho, preferência da cliente..."></textarea></div></div>`,()=>salvarAgendamento())}
-function puxarValor(){let s=db.servicos.find(x=>x.id===document.getElementById("aServico").value);if(s)document.getElementById("aValor").value=s.valor}
-function salvarAgendamento(){
- let cid=document.getElementById("aCliente").value,h=document.getElementById("aHora").value, s=db.servicos.find(x=>x.id===document.getElementById("aServico").value), c=db.clientes.find(x=>x.id===cid),v=Number(document.getElementById("aValor").value);
- if(!c||!h||!s){alert("Preencha cliente, horário e procedimento.");return}
- if(db.agendamentos.some(a=>a.data===iso(dia)&&a.horario===h)){alert("Esse horário já está ocupado. Escolha outro horário.");return}
- db.agendamentos.push({id:crypto.randomUUID(),data:iso(dia),horario:h,clienteId:cid,clienteNome:c.nome,telefone:c.telefone,servicoId:s.id,servicoNome:s.nome,valor:v,confirmacao:document.getElementById("aConf").value,pagamento:document.getElementById("aPag").value,forma:document.getElementById("aForma").value,obs:document.getElementById("aObs").value,status:"Agendado"});
- save();fecharModal();renderAgenda();
+
+function renderAgenda(){
+
+  const visao=document.getElementById("visaoAgenda").value;
+  const conteudo=document.getElementById("conteudoAgenda");
+
+  if(visao==="dia"){
+    document.getElementById("tituloAgenda").textContent=brDate(dia);
+    renderDia(conteudo);
+  }
+
+  if(visao==="semana"){
+    renderSemana(conteudo);
+  }
+
+  if(visao==="mes"){
+    renderMes(conteudo);
+  }
 }
-function editarAgendamento(id){let a=db.agendamentos.find(x=>x.id===id);let opts=db.clientes.map(c=>`<option value="${c.id}" ${c.id===a.clienteId?"selected":""}>${esc(c.nome)} — ${esc(c.telefone)}</option>`).join("");let sv=db.servicos.map(s=>`<option value="${s.id}" ${s.id===a.servicoId?"selected":""}>${esc(s.nome)} — ${money(s.valor)}</option>`).join("");modal("Editar agendamento",`<div class="formgrid"><div class="field"><label>Cliente</label><select id="aCliente">${opts}</select></div><div class="field"><label>Horário</label><input id="aHora" type="time" step="60" value="${a.horario}"><small style="color:#756d74">O horário pode ser alterado livremente.</small></div><div class="field"><label>Procedimento</label><select id="aServico" onchange="puxarValor()">${sv}</select></div><div class="field"><label>Valor</label><input id="aValor" type="number" step=".01" value="${a.valor}"></div><div class="field"><label>Confirmação</label><select id="aConf"><option ${a.confirmacao==="A confirmar"?"selected":""}>A confirmar</option><option ${a.confirmacao==="Confirmada"?"selected":""}>Confirmada</option><option ${a.confirmacao==="Cancelada"?"selected":""}>Cancelada</option></select></div><div class="field"><label>Pagamento</label><select id="aPag"><option ${a.pagamento==="Pendente"?"selected":""}>Pendente</option><option ${a.pagamento==="Pago"?"selected":""}>Pago</option></select></div><div class="field"><label>Forma de pagamento</label><select id="aForma"><option ${a.forma==="Pix"?"selected":""}>Pix</option><option ${a.forma==="Dinheiro"?"selected":""}>Dinheiro</option><option ${a.forma==="Débito"?"selected":""}>Débito</option><option ${a.forma==="Crédito"?"selected":""}>Crédito</option></select></div><div class="field full"><label>Observações</label><textarea id="aObs">${esc(a.obs)}</textarea></div></div><button class="btn danger" onclick="excluirAgendamento('${id}')">Excluir agendamento</button>`,()=>{let c=db.clientes.find(x=>x.id===document.getElementById("aCliente").value),s=db.servicos.find(x=>x.id===document.getElementById("aServico").value),nh=document.getElementById("aHora").value;if(db.agendamentos.some(x=>x.id!==id&&x.data===a.data&&x.horario===nh)){alert("Esse horário já está ocupado.");return}Object.assign(a,{clienteId:c.id,clienteNome:c.nome,telefone:c.telefone,horario:nh,servicoId:s.id,servicoNome:s.nome,valor:Number(document.getElementById("aValor").value),confirmacao:document.getElementById("aConf").value,pagamento:document.getElementById("aPag").value,forma:document.getElementById("aForma").value,obs:document.getElementById("aObs").value});save();fecharModal();renderAgenda()})}
-function excluirAgendamento(id){if(confirm("Excluir este agendamento?")){db.agendamentos=db.agendamentos.filter(a=>a.id!==id);save();fecharModal();renderAgenda()}}
+
+function renderDia(el){
+
+  const data=iso(dia);
+
+  const ag=db.agendamentos
+    .filter(a=>a.data===data)
+    .sort((a,b)=>a.hora.localeCompare(b.hora));
+
+  if(!ag.length){
+    el.innerHTML='<div class="empty">Nenhum agendamento para este dia.</div>';
+    return;
+  }
+
+  el.innerHTML='<div class="day-list">'+ag.map((a,i)=>agendaHTML(a,i)).join("")+'</div>';
+}
+
+function agendaHTML(a,index){
+
+  const cliente=db.clientes.find(c=>c.id===a.clienteId);
+
+  const nome=cliente?cliente.nome:a.nome||"Cliente";
+
+  const serv=db.servicos.find(s=>s.id===a.servicoId);
+
+  const servico=serv?serv.nome:a.servico||"";
+
+  const valor=Number(a.valor||serv?.valor||0);
+
+  return `
+    <div class="agenda-item">
+
+      <div class="time">${esc(a.hora)}</div>
+
+      <div>
+        <div class="title">${esc(nome)}</div>
+        <div class="small">
+          ${esc(servico)}
+          ${valor?` · ${money(valor)}`:""}
+        </div>
+        <div style="margin-top:6px">
+          <span class="status ${a.confirmado?"ok":""}">
+            ${a.confirmado?"Confirmado":"A confirmar"}
+          </span>
+          ${a.pago?'<span class="status paid">Pago</span>':""}
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn secondary" type="button" onclick="confirmar(${index})">
+          ${a.confirmado?"Desconfirmar":"Confirmar"}
+        </button>
+
+        <button class="btn green" type="button" onclick="abrirWhatsApp(${index})">
+          WhatsApp
+        </button>
+
+        <button class="btn secondary" type="button" onclick="marcarPago(${index})">
+          ${a.pago?"Desfazer":"Pago"}
+        </button>
+
+        <button class="btn danger" type="button" onclick="excluirAgendamento(${index})">
+          Excluir
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+function renderSemana(el){
+
+  const inicio=new Date(dia);
+
+  const diaSemana=inicio.getDay();
+
+  inicio.setDate(inicio.getDate()-diaSemana);
+
+  const fim=new Date(inicio);
+  fim.setDate(fim.getDate()+6);
+
+  document.getElementById("tituloAgenda").textContent=
+    inicio.toLocaleDateString("pt-BR")+
+    " até "+
+    fim.toLocaleDateString("pt-BR");
+
+  let html='<div class="week-list">';
+
+  for(let i=0;i<7;i++){
+
+    const d=new Date(inicio);
+    d.setDate(inicio.getDate()+i);
+
+    const data=iso(d);
+
+    const ag=db.agendamentos
+      .filter(a=>a.data===data)
+      .sort((a,b)=>a.hora.localeCompare(b.hora));
+
+    html+=`
+      <div class="card">
+        <div class="title" style="margin-bottom:10px">
+          ${d.toLocaleDateString("pt-BR",{
+            weekday:"long",
+            day:"2-digit",
+            month:"2-digit"
+          })}
+        </div>
+    `;
+
+    if(!ag.length){
+
+      html+='<div class="empty">Nenhum agendamento.</div>';
+
+    }else{
+
+      html+=ag.map(a=>{
+
+        const index=db.agendamentos.indexOf(a);
+
+        return agendaHTML(a,index);
+
+      }).join("");
+
+    }
+
+    html+='</div>';
+
+  }
+
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+function renderMes(el){
+
+  const ano=dia.getFullYear();
+  const mes=dia.getMonth();
+
+  const primeiro=new Date(ano,mes,1);
+  const ultimo=new Date(ano,mes+1,0);
+
+  document.getElementById("tituloAgenda").textContent=
+    primeiro.toLocaleDateString("pt-BR",{
+      month:"long",
+      year:"numeric"
+    });
+
+  const inicio=new Date(primeiro);
+
+  inicio.setDate(primeiro.getDate()-primeiro.getDay());
+
+  const fim=new Date(ultimo);
+
+  fim.setDate(
+    ultimo.getDate()+(6-ultimo.getDay())
+  );
+
+  let html=`
+    <div class="calendar">
+
+      <div class="weekday">Dom</div>
+      <div class="weekday">Seg</div>
+      <div class="weekday">Ter</div>
+      <div class="weekday">Qua</div>
+      <div class="weekday">Qui</div>
+      <div class="weekday">Sex</div>
+      <div class="weekday">Sáb</div>
+  `;
+
+  let atual=new Date(inicio);
+
+  while(atual<=fim){
+
+    const d=new Date(atual);
+
+    const data=iso(d);
+
+    const ag=db.agendamentos
+      .filter(a=>a.data===data)
+      .sort((a,b)=>a.hora.localeCompare(b.hora));
+
+    const fora=d.getMonth()!==mes;
+
+    const hoje=iso(d)===iso(new Date());
+
+    html+=`
+      <div
+        class="day ${fora?"other":""} ${hoje?"today":""}"
+        onclick="abrirDia('${data}')"
+      >
+
+        <div class="daynum">
+          ${d.getDate()}
+        </div>
+
+        ${ag.slice(0,3).map(a=>{
+
+          const cliente=db.clientes.find(
+            c=>c.id===a.clienteId
+          );
+
+          const nome=cliente?
+            cliente.nome:
+            a.nome||"Cliente";
+
+          return `
+            <div class="event">
+              ${esc(a.hora)} ${esc(nome)}
+            </div>
+          `;
+
+        }).join("")}
+
+        ${ag.length>3?
+          `<div class="event">+${ag.length-3} mais</div>`:
+          ""
+        }
+
+      </div>
+    `;
+
+    atual.setDate(atual.getDate()+1);
+
+  }
+
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+function abrirDia(data){
+
+  const partes=data.split("-");
+
+  dia=new Date(
+    Number(partes[0]),
+    Number(partes[1])-1,
+    Number(partes[2])
+  );
+
+  document.getElementById("visaoAgenda").value="dia";
+
+  renderAgenda();
+}
+
+function abrirNovoCliente(){
+
+  abrirModal(`
+    <h2>Nova cliente</h2>
+
+    <div class="formgrid">
+
+      <input
+        id="clienteNome"
+        placeholder="Nome completo"
+      >
+
+      <input
+        id="clienteTelefone"
+        placeholder="Telefone / WhatsApp"
+        inputmode="tel"
+      >
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="btn secondary"
+        onclick="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        onclick="salvarCliente()"
+      >
+        Salvar cliente
+      </button>
+
+    </div>
+  `);
+}
+
+async function salvarCliente(){
+
+  const nome=
+    document.getElementById("clienteNome")
+    .value
+    .trim();
+
+  const telefone=
+    document.getElementById("clienteTelefone")
+    .value
+    .trim();
+
+  if(!nome){
+
+    alert("Informe o nome da cliente.");
+
+    return;
+  }
+
+  db.clientes.push({
+    id:gerarId(),
+    nome,
+    telefone
+  });
+
+  await save();
+
+  fecharModal();
+
+  renderClientes();
+}
+
+function renderClientes(){
+
+  const busca=
+    document.getElementById("buscaCliente")?
+    document.getElementById("buscaCliente")
+      .value
+      .trim()
+      .toLowerCase():
+    "";
+
+  const clientes=db.clientes.filter(c=>{
+
+    return (
+      c.nome.toLowerCase().includes(busca) ||
+      String(c.telefone||"")
+        .toLowerCase()
+        .includes(busca)
+    );
+
+  });
+
+  const lista=document.getElementById("listaClientes");
+
+  if(!clientes.length){
+
+    lista.innerHTML=
+      '<div class="empty">Nenhuma cliente cadastrada.</div>';
+
+    return;
+  }
+
+  lista.innerHTML=clientes.map(c=>{
+
+    const index=db.clientes.indexOf(c);
+
+    return `
+      <div class="row">
+
+        <div>
+
+          <div class="title">
+            ${esc(c.nome)}
+          </div>
+
+          <div class="small">
+            ${esc(c.telefone||"Sem telefone")}
+          </div>
+
+        </div>
+
+        <div class="actions">
+
+          ${c.telefone?
+            `
+              <button
+                type="button"
+                class="btn green"
+                onclick="whatsCliente('${c.id}')"
+              >
+                WhatsApp
+              </button>
+            `:
+            ""
+          }
+
+          <button
+            type="button"
+            class="btn danger"
+            onclick="excluirCliente(${index})"
+          >
+            Excluir
+          </button>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+async function excluirCliente(index){
+
+  if(!confirm("Deseja excluir esta cliente?"))return;
+
+  db.clientes.splice(index,1);
+
+  await save();
+
+  renderClientes();
+}
+
+function whatsCliente(id){
+
+  const cliente=db.clientes.find(
+    c=>c.id===id
+  );
+
+  if(!cliente)return;
+
+  const numero=String(cliente.telefone||"")
+    .replace(/\D/g,"");
+
+  if(!numero){
+
+    alert("Esta cliente não possui telefone cadastrado.");
+
+    return;
+  }
+
+  window.open(
+    "https://wa.me/55"+numero,
+    "_blank"
+  );
+}
+
+function abrirNovoServico(){
+
+  abrirModal(`
+    <h2>Novo serviço</h2>
+
+    <div class="formgrid">
+
+      <input
+        id="servicoNome"
+        placeholder="Nome do serviço"
+      >
+
+      <input
+        id="servicoValor"
+        type="number"
+        step="0.01"
+        placeholder="Valor"
+      >
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="btn secondary"
+        onclick="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        onclick="salvarServico()"
+      >
+        Salvar serviço
+      </button>
+
+    </div>
+  `);
+}
+
+async function salvarServico(){
+
+  const nome=
+    document.getElementById("servicoNome")
+    .value
+    .trim();
+
+  const valor=
+    Number(
+      document.getElementById("servicoValor").value
+    )||0;
+
+  if(!nome){
+
+    alert("Informe o nome do serviço.");
+
+    return;
+  }
+
+  db.servicos.push({
+    id:gerarId(),
+    nome,
+    valor
+  });
+
+  await save();
+
+  fecharModal();
+
+  renderServicos();
+}
+
+function renderServicos(){
+
+  const lista=document.getElementById("listaServicos");
+
+  if(!db.servicos.length){
+
+    lista.innerHTML=
+      '<div class="empty">Nenhum serviço cadastrado.</div>';
+
+    return;
+  }
+
+  lista.innerHTML=db.servicos.map(s=>{
+
+    const index=db.servicos.indexOf(s);
+
+    return `
+      <div class="row">
+
+        <div>
+
+          <div class="title">
+            ${esc(s.nome)}
+          </div>
+
+          <div class="small">
+            ${money(s.valor)}
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="btn danger"
+          onclick="excluirServico(${index})"
+        >
+          Excluir
+        </button>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+async function excluirServico(index){
+
+  if(!confirm("Deseja excluir este serviço?"))return;
+
+  db.servicos.splice(index,1);
+
+  await save();
+
+  renderServicos();
+}
+  function abrirNovoAgendamento(dataPadrao=""){
+
+  const clientesOptions=db.clientes.map(c=>
+    `<option value="${c.id}">${esc(c.nome)}</option>`
+  ).join("");
+
+  const servicosOptions=db.servicos.map(s=>
+    `<option value="${s.id}">${esc(s.nome)} — ${money(s.valor)}</option>`
+  ).join("");
+
+  abrirModal(`
+    <h2>Novo agendamento</h2>
+
+    <div class="formgrid">
+
+      <div>
+        <label>Cliente</label>
+
+        <select id="agCliente">
+          <option value="">Selecione a cliente</option>
+          ${clientesOptions}
+        </select>
+      </div>
+
+      <div>
+        <label>Serviço</label>
+
+        <select id="agServico">
+          <option value="">Selecione o serviço</option>
+          ${servicosOptions}
+        </select>
+      </div>
+
+      <div>
+        <label>Data</label>
+
+        <input
+          id="agData"
+          type="date"
+          value="${dataPadrao || iso(dia)}"
+        >
+      </div>
+
+      <div>
+        <label>Horário</label>
+
+        <input
+          id="agHora"
+          type="time"
+        >
+      </div>
+
+      <div>
+        <label>Valor</label>
+
+        <input
+          id="agValor"
+          type="number"
+          step="0.01"
+          placeholder="Valor"
+        >
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="btn secondary"
+        onclick="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        onclick="salvarAgendamento()"
+      >
+        Salvar agendamento
+      </button>
+
+    </div>
+  `);
+
+  const servico=document.getElementById("agServico");
+
+  servico.addEventListener("change",function(){
+
+    const s=db.servicos.find(
+      x=>x.id===this.value
+    );
+
+    if(s){
+
+      document.getElementById("agValor").value=s.valor;
+
+    }
+
+  });
+}
+
+async function salvarAgendamento(){
+
+  const clienteId=
+    document.getElementById("agCliente").value;
+
+  const servicoId=
+    document.getElementById("agServico").value;
+
+  const data=
+    document.getElementById("agData").value;
+
+  const hora=
+    document.getElementById("agHora").value;
+
+  const valor=
+    Number(
+      document.getElementById("agValor").value
+    )||0;
+
+  if(!clienteId){
+
+    alert("Selecione a cliente.");
+
+    return;
+  }
+
+  if(!data){
+
+    alert("Informe a data.");
+
+    return;
+  }
+
+  if(!hora){
+
+    alert("Informe o horário.");
+
+    return;
+  }
+
+  const cliente=db.clientes.find(
+    c=>c.id===clienteId
+  );
+
+  const servico=db.servicos.find(
+    s=>s.id===servicoId
+  );
+
+  db.agendamentos.push({
+    id:gerarId(),
+    clienteId,
+    servicoId,
+    data,
+    hora,
+    valor,
+    confirmado:false,
+    pago:false,
+    nome:cliente?cliente.nome:"",
+    servicoNome:servico?servico.nome:""
+  });
+
+  await save();
+
+  fecharModal();
+
+  renderAgenda();
+}
+
+function agendaHTML(a,index){
+
+  const cliente=db.clientes.find(
+    c=>c.id===a.clienteId
+  );
+
+  const servico=db.servicos.find(
+    s=>s.id===a.servicoId
+  );
+
+  const nome=cliente?
+    cliente.nome:
+    a.nome||"Cliente";
+
+  const telefone=cliente?
+    cliente.telefone:
+    "";
+
+  const nomeServico=servico?
+    servico.nome:
+    a.servicoNome||"";
+
+  return `
+    <div class="appointment">
+
+      <div class="appointment-top">
+
+        <div>
+
+          <div class="appointment-time">
+            ${esc(a.hora)}
+          </div>
+
+          <div class="title">
+            ${esc(nome)}
+          </div>
+
+          <div class="small">
+            ${esc(nomeServico)}
+          </div>
+
+        </div>
+
+        <div class="small">
+          ${money(a.valor)}
+        </div>
+
+      </div>
+
+      <div class="badges">
+
+        <span class="badge ${a.confirmado?"yes":"no"}">
+          ${a.confirmado?
+            "Confirmado":
+            "Não confirmado"
+          }
+        </span>
+
+        <span class="badge ${a.pago?"yes":"no"}">
+          ${a.pago?
+            "Pago":
+            "Pendente"
+          }
+        </span>
+
+      </div>
+
+      <div class="appointment-actions">
+
+        ${
+          telefone?
+          `
+            <button
+              type="button"
+              class="btn green"
+              onclick="confirmarWhatsApp('${a.id}')"
+            >
+              WhatsApp
+            </button>
+          `:
+          ""
+        }
+
+        <button
+          type="button"
+          class="btn secondary"
+          onclick="toggleConfirmado('${a.id}')"
+        >
+          ${a.confirmado?
+            "Desconfirmar":
+            "Confirmar"
+          }
+        </button>
+
+        <button
+          type="button"
+          class="btn secondary"
+          onclick="togglePago('${a.id}')"
+        >
+          ${a.pago?
+            "Desmarcar pagamento":
+            "Marcar pago"
+          }
+        </button>
+
+        <button
+          type="button"
+          class="btn danger"
+          onclick="excluirAgendamento('${a.id}')"
+        >
+          Excluir
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
+async function toggleConfirmado(id){
+
+  const ag=db.agendamentos.find(
+    a=>a.id===id
+  );
+
+  if(!ag)return;
+
+  ag.confirmado=!ag.confirmado;
+
+  await save();
+
+  renderAgenda();
+}
+
+async function togglePago(id){
+
+  const ag=db.agendamentos.find(
+    a=>a.id===id
+  );
+
+  if(!ag)return;
+
+  ag.pago=!ag.pago;
+
+  await save();
+
+  renderAgenda();
+
+  renderFinanceiro();
+}
+
+async function excluirAgendamento(id){
+
+  if(!confirm("Deseja excluir este agendamento?"))return;
+
+  db.agendamentos=db.agendamentos.filter(
+    a=>a.id!==id
+  );
+
+  await save();
+
+  renderAgenda();
+
+  renderFinanceiro();
+}
+
+function confirmarWhatsApp(id){
+
+  const ag=db.agendamentos.find(
+    a=>a.id===id
+  );
+
+  if(!ag)return;
+
+  const cliente=db.clientes.find(
+    c=>c.id===ag.clienteId
+  );
+
+  if(!cliente || !cliente.telefone){
+
+    alert("Esta cliente não possui telefone cadastrado.");
+
+    return;
+  }
+
+  const numero=String(cliente.telefone)
+    .replace(/\D/g,"");
+
+  const dataObj=new Date(
+    ag.data+"T12:00:00"
+  );
+
+  const dataFormatada=
+    dataObj.toLocaleDateString("pt-BR");
+
+  const mensagem=
+`Olá, ${cliente.nome}! 😊
+
+Passando para confirmar seu horário.
+
+📅 Data: ${dataFormatada}
+🕐 Horário: ${ag.hora}
+
+Você confirma sua presença?`;
+
+  const url=
+    "https://wa.me/55"+
+    numero+
+    "?text="+
+    encodeURIComponent(mensagem);
+
+  window.open(url,"_blank");
+}
+
 function renderFinanceiro(){
- let now=new Date(),mode=document.getElementById("periodoFin").value;
- let arr=db.agendamentos.filter(a=>a.status!=="Cancelado"&&a.pagamento==="Pago");
- if(mode==="mes")arr=arr.filter(a=>a.data.slice(0,7)===iso(now).slice(0,7));
- if(mode==="ano")arr=arr.filter(a=>a.data.slice(0,4)===String(now.getFullYear()));
- if(mode==="semana"){let d=new Date(now);let day=d.getDay()||7;d.setDate(d.getDate()-day+1);let ini=iso(d);let fim=new Date(d);fim.setDate(fim.getDate()+6);arr=arr.filter(a=>a.data>=ini&&a.data<=iso(fim))}
- let pend=db.agendamentos.filter(a=>a.status!=="Cancelado"&&a.pagamento!=="Pago");let total=arr.reduce((s,a)=>s+Number(a.valor),0);
- document.getElementById("fAt").textContent=arr.length;document.getElementById("fRec").textContent=money(total);document.getElementById("fPend").textContent=money(pend.reduce((s,a)=>s+Number(a.valor),0));document.getElementById("fMed").textContent=money(arr.length?total/arr.length:0);
- let groups={};arr.forEach(a=>{let k=mode==="ano"?a.data.slice(0,7):a.data;groups[k]=(groups[k]||0)+Number(a.valor)});let keys=Object.keys(groups).sort().slice(-8),max=Math.max(...keys.map(k=>groups[k]),1);document.getElementById("chart").innerHTML=keys.length?keys.map(k=>`<div class="barwrap"><b>${money(groups[k]).replace(",00","")}</b><div class="bar" style="height:${Math.max(3,groups[k]/max*80)}%"></div><small>${mode==="ano"?k.slice(5):k.slice(8)}</small></div>`).join(""):`<div class="empty">Ainda não há pagamentos registrados neste período.</div>`;
- let forms={Pix:0,Dinheiro:0,Débito:0,Crédito:0};arr.forEach(a=>forms[a.forma]=(forms[a.forma]||0)+Number(a.valor));document.getElementById("formas").innerHTML=Object.entries(forms).map(([k,v])=>`<p><b>${k}</b>: ${money(v)}</p>`).join("");
+
+  const mes=dia.getMonth();
+  const ano=dia.getFullYear();
+
+  const agMes=db.agendamentos.filter(a=>{
+
+    const d=new Date(
+      a.data+"T12:00:00"
+    );
+
+    return (
+      d.getMonth()===mes &&
+      d.getFullYear()===ano
+    );
+
+  });
+
+  const total=
+    agMes.reduce(
+      (s,a)=>s+(Number(a.valor)||0),
+      0
+    );
+
+  const recebido=
+    agMes
+      .filter(a=>a.pago)
+      .reduce(
+        (s,a)=>s+(Number(a.valor)||0),
+        0
+      );
+
+  const pendente=total-recebido;
+
+  const titulo=document.getElementById("financeiroTitulo");
+  if(titulo) titulo.textContent=dia.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const agendado=document.getElementById("finAgendado");
+  const qtd=document.getElementById("finQuantidade");
+  const rec=document.getElementById("finRecebido");
+  const pend=document.getElementById("finPendente");
+  if(agendado) agendado.textContent=money(total);
+  if(qtd) qtd.textContent=agMes.length;
+  if(rec) rec.textContent=money(recebido);
+  if(pend) pend.textContent=money(pendente);
+
+  const lista=document.getElementById(
+    "listaFinanceiro"
+  );
+
+  if(!agMes.length){
+
+    lista.innerHTML=
+      '<div class="empty">Nenhum agendamento neste mês.</div>';
+
+    return;
+  }
+
+  lista.innerHTML=agMes
+    .sort((a,b)=>
+      (a.data+a.hora)
+        .localeCompare(b.data+b.hora)
+    )
+    .map(a=>{
+
+      const cliente=db.clientes.find(
+        c=>c.id===a.clienteId
+      );
+
+      return `
+        <div class="row">
+
+          <div>
+
+            <div class="title">
+              ${esc(
+                cliente?
+                cliente.nome:
+                a.nome||"Cliente"
+              )}
+            </div>
+
+            <div class="small">
+              ${new Date(
+                a.data+"T12:00:00"
+              ).toLocaleDateString("pt-BR")}
+              às ${esc(a.hora)}
+            </div>
+
+          </div>
+
+          <div>
+
+            <div class="title">
+              ${money(a.valor)}
+            </div>
+
+            <div class="small ${
+              a.pago?
+              "positive":
+              "negative"
+            }">
+
+              ${a.pago?
+                "Pago":
+                "Pendente"
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
 }
-document.getElementById("visaoAgenda").value="dia";
-renderAgenda();
-initAgendaAuth();
+
+
+/* =========================
+   MODAL
+========================= */
+
+function abrirModal(conteudo){
+  document.getElementById("modal").innerHTML=conteudo;
+  document.getElementById("modalBg").style.display="flex";
+}
+
+function fecharModal(){
+  document.getElementById("modalBg").style.display="none";
+  document.getElementById("modal").innerHTML="";
+}
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+
+async function iniciar(){
+  saveLocal();
+  renderAgenda();
+  renderClientes();
+  renderServicos();
+  renderFinanceiro();
+  await initAgendaAuth();
+}
+
+iniciar();
+
+document.getElementById("modalBg").addEventListener("click",function(e){
+  if(e.target===this) fecharModal();
+});
+
 </script>
+
 </body>
 </html>
