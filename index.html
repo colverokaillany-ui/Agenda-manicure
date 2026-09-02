@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Agenda da Manicure</title>
 <style>
 :root{--bg:#f8f6f7;--card:#fff;--text:#302b30;--muted:#756d74;--primary:#9b5f78;--primary2:#7f4860;--line:#eadfe4;--ok:#4f8a67;--warn:#b27a31;--danger:#b45757}
@@ -40,6 +41,45 @@ body{padding-bottom:70px}.side{width:100%;height:64px;bottom:0;left:0;top:auto;p
 .slot{grid-template-columns:58px 1fr;padding:11px 3px}.booking{display:block}.booking .pill{margin-top:4px}.toolbar{gap:6px}.toolbar .date{min-width:auto;font-size:13px}
 .toolbar .btn{padding:8px 10px}.toolbar #visaoAgenda{max-width:92px;padding:8px}.card{padding:12px}
 }
+
+/* LOGIN E SINCRONIZAÇÃO */
+.sync-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px}
+.sync-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sync-title{font-weight:800;font-size:16px}.sync-status{font-size:12px;color:var(--muted);margin-top:4px}
+.sync-login{display:flex;gap:8px;align-items:center;margin-top:12px}
+.sync-login input{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:180px}
+.sync-logged{display:none;margin-top:12px;align-items:center;justify-content:space-between;gap:10px}
+
+/* MOBILE: menu no topo, com os nomes completos e sem barra inferior cobrindo os botões */
+@media(max-width:850px){
+  body{padding-bottom:0!important}
+  .app{display:block!important}
+  .side{
+    position:sticky!important;top:0!important;left:auto!important;bottom:auto!important;
+    width:100%!important;height:auto!important;min-height:0!important;
+    padding:8px!important;border-right:0!important;border-bottom:1px solid var(--line)!important;
+    z-index:9999!important;pointer-events:auto!important
+  }
+  .brand{display:none!important}
+  .nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;width:100%!important}
+  .nav button{
+    width:100%!important;margin:0!important;padding:10px 4px!important;
+    min-height:48px!important;text-align:center!important;font-size:15px!important;
+    position:relative!important;z-index:10000!important;pointer-events:auto!important;
+    touch-action:manipulation!important;-webkit-tap-highlight-color:rgba(0,0,0,.08)!important
+  }
+  .nav span{display:block!important;font-size:11px!important;margin-top:2px!important}
+  .main{margin-left:0!important;width:100%!important;padding:12px!important;max-width:none!important}
+  .sync-login{display:grid!important;grid-template-columns:1fr 1fr!important}
+  .sync-login .btn{grid-column:1/-1!important}
+  .sync-login input{min-width:0!important;width:100%!important}
+}
+@media(max-width:430px){
+  .nav button{font-size:13px!important;padding:8px 2px!important}
+  .nav span{font-size:10px!important}
+  .sync-head{display:block}
+}
+
 </style>
 </head>
 <body>
@@ -54,6 +94,27 @@ body{padding-bottom:70px}.side{width:100%;height:64px;bottom:0;left:0;top:auto;p
   </nav>
 </aside>
 <main class="main">
+
+<div class="sync-card">
+  <div class="sync-head">
+    <div>
+      <div class="sync-title">Sincronização entre dispositivos</div>
+      <div id="syncStatus" class="sync-status">Não conectado</div>
+    </div>
+  </div>
+
+  <div id="loginArea" class="sync-login">
+    <input id="loginEmail" type="email" placeholder="E-mail">
+    <input id="loginPassword" type="password" placeholder="Senha">
+    <button type="button" class="btn" onclick="loginAgenda()">Entrar</button>
+  </div>
+
+  <div id="loggedArea" class="sync-logged">
+    <div>Conectado: <b id="loggedEmail"></b></div>
+    <button type="button" class="btn secondary" onclick="logoutAgenda()">Sair</button>
+  </div>
+</div>
+
 <section id="agenda" class="section active">
 <div class="top"><div class="title"><h1>Agenda</h1><p>Organize os horários sem esquecer nenhum atendimento.</p></div><button class="btn" onclick="novoAgendamento()">+ Agendar</button></div>
 <div class="grid">
@@ -102,15 +163,115 @@ body{padding-bottom:70px}.side{width:100%;height:64px;bottom:0;left:0;top:auto;p
 
 <script>
 const KEY="agenda_manicure_v1";
+const SUPABASE_URL="https://rsqavveigkdysxcmcioa.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_6rsJ3AszRnTqSJ74KbxB-w_BOIFntzf";
+const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+
 let db=JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"servicos":[],"agendamentos":[]}');
+if(!Array.isArray(db.clientes))db.clientes=[];
+if(!Array.isArray(db.servicos))db.servicos=[];
+if(!Array.isArray(db.agendamentos))db.agendamentos=[];
+
 let dia=new Date(); dia.setHours(0,0,0,0);
 const pad=n=>String(n).padStart(2,"0"), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const brDate=d=>new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(d);
 const money=v=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(v)||0);
-function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(db))}
+function setSyncStatus(t){const e=document.getElementById("syncStatus");if(e)e.textContent=t}
+
+async function save(){
+  saveLocal();
+  if(!sb)return;
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user)return;
+  setSyncStatus("Sincronizando...");
+  const {error}=await sb.from("agenda_manicure_data").upsert(
+    {user_id:user.id,data:db,updated_at:new Date().toISOString()},
+    {onConflict:"user_id"}
+  );
+  setSyncStatus(error?"Erro ao sincronizar":"Sincronizado");
+}
+
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function showSection(id){document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.section===id));if(id==="agenda")renderAgenda();if(id==="clientes")renderClientes();if(id==="servicos")renderServicos();if(id==="financeiro")renderFinanceiro()}
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showSection(b.dataset.section));
+
+function showSection(id){
+  const target=document.getElementById(id);
+  if(!target)return;
+  document.querySelectorAll(".section").forEach(x=>{
+    x.classList.remove("active");
+    x.style.display="none";
+  });
+  target.classList.add("active");
+  target.style.display="block";
+  document.querySelectorAll(".nav button[data-section]").forEach(x=>{
+    x.classList.toggle("active",x.dataset.section===id);
+  });
+  if(id==="agenda")renderAgenda();
+  if(id==="clientes")renderClientes();
+  if(id==="servicos")renderServicos();
+  if(id==="financeiro")renderFinanceiro();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+/* Delegação de eventos: funciona melhor no Safari/iPhone do que depender apenas do onclick */
+document.addEventListener("click",function(e){
+  const b=e.target.closest && e.target.closest(".nav button[data-section]");
+  if(!b)return;
+  e.preventDefault();
+  showSection(b.dataset.section);
+},true);
+
+document.addEventListener("touchend",function(e){
+  const b=e.target.closest && e.target.closest(".nav button[data-section]");
+  if(!b)return;
+  e.preventDefault();
+  showSection(b.dataset.section);
+},{capture:true,passive:false});
+
+async function loginAgenda(){
+  if(!sb){alert("Não foi possível carregar a conexão.");return}
+  const email=document.getElementById("loginEmail").value.trim();
+  const password=document.getElementById("loginPassword").value;
+  if(!email||!password){alert("Informe o e-mail e a senha.");return}
+  setSyncStatus("Entrando...");
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){alert(error.message);setSyncStatus("Falha no login");return}
+  await afterLoginAgenda(data.user);
+}
+
+async function afterLoginAgenda(user){
+  document.getElementById("loginArea").style.display="none";
+  document.getElementById("loggedArea").style.display="flex";
+  document.getElementById("loggedEmail").textContent=user.email;
+  setSyncStatus("Carregando dados...");
+  const {data,error}=await sb.from("agenda_manicure_data").select("data").eq("user_id",user.id).maybeSingle();
+  if(error){setSyncStatus("Erro ao carregar");return}
+  if(data && data.data){
+    db=data.data;
+    if(!Array.isArray(db.clientes))db.clientes=[];
+    if(!Array.isArray(db.servicos))db.servicos=[];
+    if(!Array.isArray(db.agendamentos))db.agendamentos=[];
+    saveLocal();
+  }else{
+    await save();
+  }
+  renderAgenda();renderClientes();renderServicos();renderFinanceiro();
+  setSyncStatus("Sincronizado");
+}
+
+async function logoutAgenda(){
+  if(sb)await sb.auth.signOut();
+  document.getElementById("loginArea").style.display="grid";
+  document.getElementById("loggedArea").style.display="none";
+  setSyncStatus("Não conectado");
+}
+
+async function initAgendaAuth(){
+  if(!sb)return;
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)await afterLoginAgenda(session.user);
+}
 function moverDia(n){
  const view=document.getElementById("visaoAgenda")?.value||"dia";
  if(view==="semana") dia.setDate(dia.getDate()+7*n);
@@ -193,6 +354,7 @@ function renderFinanceiro(){
 }
 document.getElementById("visaoAgenda").value="dia";
 renderAgenda();
+initAgendaAuth();
 </script>
 </body>
 </html>
