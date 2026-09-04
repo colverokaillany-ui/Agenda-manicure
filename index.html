@@ -607,18 +607,6 @@ document.addEventListener("click",function(e){
 
 },true);
 
-document.addEventListener("touchend",function(e){
-
-  const b=e.target.closest && e.target.closest(".nav button[data-section]");
-
-  if(!b)return;
-
-  e.preventDefault();
-
-  showSection(b.dataset.section);
-
-},{capture:true,passive:false});
-
 async function loginAgenda(){
 
   if(!sb){
@@ -1320,7 +1308,7 @@ async function excluirServico(index){
   ).join("");
 
   const servicosOptions=db.servicos.map(s=>
-    `<option value="${s.id}">${esc(s.nome)} — ${money(s.valor)}</option>`
+    `<option value="${s.id}">${esc(s.nome)}</option>`
   ).join("");
 
   abrirModal(`
@@ -1332,28 +1320,13 @@ async function excluirServico(index){
         <label>Cliente</label>
 
         <select id="agCliente">
-          <option value="">Selecione a cliente</option>
+          <option value="">Selecione uma cliente</option>
           ${clientesOptions}
         </select>
-      </div>
 
-      <div>
-        <label>Serviço</label>
-
-        <select id="agServico">
-          <option value="">Selecione o serviço</option>
-          ${servicosOptions}
-        </select>
-      </div>
-
-      <div>
-        <label>Data</label>
-
-        <input
-          id="agData"
-          type="date"
-          value="${dataPadrao || iso(dia)}"
-        >
+        <div class="small" id="agTelefoneInfo">
+          A cliente já cadastrada terá o WhatsApp preenchido automaticamente.
+        </div>
       </div>
 
       <div>
@@ -1362,7 +1335,22 @@ async function excluirServico(index){
         <input
           id="agHora"
           type="time"
+          step="60"
+          placeholder="--:--"
         >
+
+        <div class="small">
+          Você pode escolher qualquer horário, como 08:15, 08:45 ou 09:10.
+        </div>
+      </div>
+
+      <div>
+        <label>Procedimento</label>
+
+        <select id="agServico">
+          <option value="">Selecione</option>
+          ${servicosOptions}
+        </select>
       </div>
 
       <div>
@@ -1374,6 +1362,44 @@ async function excluirServico(index){
           step="0.01"
           placeholder="Valor"
         >
+      </div>
+
+      <div>
+        <label>Confirmação</label>
+
+        <select id="agConfirmacao">
+          <option value="false">A confirmar</option>
+          <option value="true">Confirmado</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Pagamento</label>
+
+        <select id="agPagamento">
+          <option value="false">Pendente</option>
+          <option value="true">Pago</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Forma de pagamento</label>
+
+        <select id="agFormaPagamento">
+          <option value="Pix">Pix</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label>Observações</label>
+
+        <textarea
+          id="agObservacoes"
+          placeholder="Ex.: esmalte vermelho, preferência da cliente..."
+          rows="3"
+        ></textarea>
       </div>
 
     </div>
@@ -1396,10 +1422,35 @@ async function excluirServico(index){
         Salvar agendamento
       </button>
 
+      <button
+        type="button"
+        class="btn green"
+        onclick="salvarAgendamento(true)"
+      >
+        WhatsApp — confirmar horário
+      </button>
+
     </div>
   `);
 
+  const clienteSelect=document.getElementById("agCliente");
   const servico=document.getElementById("agServico");
+
+  function atualizarTelefone(){
+    const cliente=db.clientes.find(
+      x=>x.id===clienteSelect.value
+    );
+
+    const info=document.getElementById("agTelefoneInfo");
+
+    if(!info)return;
+
+    info.textContent=cliente && cliente.telefone
+      ? `WhatsApp: ${cliente.telefone}`
+      : "A cliente já cadastrada terá o WhatsApp preenchido automaticamente.";
+  }
+
+  clienteSelect.addEventListener("change",atualizarTelefone);
 
   servico.addEventListener("change",function(){
 
@@ -1408,15 +1459,19 @@ async function excluirServico(index){
     );
 
     if(s){
-
       document.getElementById("agValor").value=s.valor;
-
     }
 
   });
+
+  atualizarTelefone();
 }
 
-async function salvarAgendamento(){
+async function salvarAgendamento(abrirWhats=false){
+
+  const janelaWhats=abrirWhats
+    ? window.open("about:blank","_blank")
+    : null;
 
   const clienteId=
     document.getElementById("agCliente").value;
@@ -1425,7 +1480,9 @@ async function salvarAgendamento(){
     document.getElementById("agServico").value;
 
   const data=
-    document.getElementById("agData").value;
+    document.getElementById("agData")?
+    document.getElementById("agData").value:
+    (typeof dia!=="undefined" ? iso(dia) : "");
 
   const hora=
     document.getElementById("agHora").value;
@@ -1435,7 +1492,21 @@ async function salvarAgendamento(){
       document.getElementById("agValor").value
     )||0;
 
+  const confirmado=
+    document.getElementById("agConfirmacao").value==="true";
+
+  const pago=
+    document.getElementById("agPagamento").value==="true";
+
+  const formaPagamento=
+    document.getElementById("agFormaPagamento").value;
+
+  const observacoes=
+    document.getElementById("agObservacoes").value.trim();
+
   if(!clienteId){
+
+    if(janelaWhats)janelaWhats.close();
 
     alert("Selecione a cliente.");
 
@@ -1444,12 +1515,16 @@ async function salvarAgendamento(){
 
   if(!data){
 
+    if(janelaWhats)janelaWhats.close();
+
     alert("Informe a data.");
 
     return;
   }
 
   if(!hora){
+
+    if(janelaWhats)janelaWhats.close();
 
     alert("Informe o horário.");
 
@@ -1464,15 +1539,19 @@ async function salvarAgendamento(){
     s=>s.id===servicoId
   );
 
+  const id=gerarId();
+
   db.agendamentos.push({
-    id:gerarId(),
+    id,
     clienteId,
     servicoId,
     data,
     hora,
     valor,
-    confirmado:false,
-    pago:false,
+    confirmado,
+    pago,
+    formaPagamento,
+    observacoes,
     nome:cliente?cliente.nome:"",
     servicoNome:servico?servico.nome:""
   });
@@ -1480,8 +1559,25 @@ async function salvarAgendamento(){
   await save();
 
   fecharModal();
-
   renderAgenda();
+
+  if(abrirWhats){
+
+    if(!cliente || !cliente.telefone){
+
+      if(janelaWhats)janelaWhats.close();
+
+      alert("A cliente não possui WhatsApp/telefone cadastrado.");
+
+      return;
+    }
+
+    if(janelaWhats){
+      janelaWhats.close();
+    }
+
+    confirmarWhatsApp(id);
+  }
 }
 
 function agendaHTML(a,index){
@@ -1554,7 +1650,7 @@ function agendaHTML(a,index){
       <div class="appointment-actions">
 
         ${
-          telefone?
+          telefone && !a.confirmado?
           `
             <button
               type="button"
@@ -1669,8 +1765,17 @@ function confirmarWhatsApp(id){
     return;
   }
 
-  const numero=String(cliente.telefone)
+  let numero=String(cliente.telefone||"")
     .replace(/\D/g,"");
+
+  if(!numero){
+    alert("Esta cliente não possui telefone cadastrado.");
+    return;
+  }
+
+  if(!(numero.startsWith("55") && (numero.length===12 || numero.length===13))){
+    numero="55"+numero;
+  }
 
   const dataObj=new Date(
     ag.data+"T12:00:00"
@@ -1690,7 +1795,7 @@ Passando para confirmar seu horário.
 Você confirma sua presença?`;
 
   const url=
-    "https://wa.me/55"+
+    "https://wa.me/"+
     numero+
     "?text="+
     encodeURIComponent(mensagem);
