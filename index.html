@@ -1639,12 +1639,9 @@ function agendaHTML(a,index){
         </span>
 
         <span class="badge ${a.pago?"yes":"no"}">
-          ${
-            a.pago
-              ? (a.formaPagamento
-                  ? `Pago - ${esc(a.formaPagamento)}`
-                  : "Pago")
-              : "Pendente"
+          ${a.pago?
+            `Pago${a.formaPagamento ? " - " + esc(a.formaPagamento) : ""}`:
+            "Pendente"
           }
         </span>
 
@@ -1690,6 +1687,14 @@ function agendaHTML(a,index){
 
         <button
           type="button"
+          class="btn secondary"
+          onclick="editarAgendamento('${a.id}')"
+        >
+          Editar
+        </button>
+
+        <button
+          type="button"
           class="btn danger"
           onclick="excluirAgendamento('${a.id}')"
         >
@@ -1731,6 +1736,138 @@ async function togglePago(id){
 
   renderAgenda();
 
+  renderFinanceiro();
+}
+
+
+function editarAgendamento(id){
+
+  const ag=db.agendamentos.find(a=>a.id===id);
+  if(!ag)return;
+
+  const clientesOptions=db.clientes.map(c=>
+    `<option value="${c.id}" ${c.id===ag.clienteId?"selected":""}>${esc(c.nome)}</option>`
+  ).join("");
+
+  const servicosOptions=db.servicos.map(s=>
+    `<option value="${s.id}" ${s.id===ag.servicoId?"selected":""}>${esc(s.nome)}</option>`
+  ).join("");
+
+  abrirModal(`
+    <h2>Editar agendamento</h2>
+
+    <div class="formgrid">
+
+      <div>
+        <label>Cliente</label>
+        <select id="editCliente">
+          <option value="">Selecione uma cliente</option>
+          ${clientesOptions}
+        </select>
+      </div>
+
+      <div>
+        <label>Horário</label>
+        <input id="editHora" type="time" value="${esc(ag.hora||"")}">
+      </div>
+
+      <div>
+        <label>Procedimento</label>
+        <select id="editServico">
+          <option value="">Selecione</option>
+          ${servicosOptions}
+        </select>
+      </div>
+
+      <div>
+        <label>Valor</label>
+        <input id="editValor" type="number" step="0.01" value="${Number(ag.valor||0)}">
+      </div>
+
+      <div>
+        <label>Confirmação</label>
+        <select id="editConfirmacao">
+          <option value="false" ${!ag.confirmado?"selected":""}>A confirmar</option>
+          <option value="true" ${ag.confirmado?"selected":""}>Confirmado</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Pagamento</label>
+        <select id="editPagamento">
+          <option value="false" ${!ag.pago?"selected":""}>Pendente</option>
+          <option value="true" ${ag.pago?"selected":""}>Pago</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Forma de pagamento</label>
+        <select id="editFormaPagamento">
+          <option value="Pix" ${ag.formaPagamento==="Pix"?"selected":""}>Pix</option>
+          <option value="Dinheiro" ${ag.formaPagamento==="Dinheiro"?"selected":""}>Dinheiro</option>
+          <option value="Cartão" ${ag.formaPagamento==="Cartão"?"selected":""}>Cartão</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label>Observações</label>
+        <textarea id="editObservacoes" rows="3">${esc(ag.observacoes||"")}</textarea>
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" onclick="fecharModal()">
+        Cancelar
+      </button>
+
+      <button type="button" class="btn" onclick="salvarEdicaoAgendamento('${id}')">
+        Salvar alterações
+      </button>
+    </div>
+  `);
+
+  document.getElementById("editServico").addEventListener("change",function(){
+    const s=db.servicos.find(x=>x.id===this.value);
+    if(s)document.getElementById("editValor").value=s.valor;
+  });
+}
+
+async function salvarEdicaoAgendamento(id){
+
+  const ag=db.agendamentos.find(a=>a.id===id);
+  if(!ag)return;
+
+  const clienteId=document.getElementById("editCliente").value;
+  const servicoId=document.getElementById("editServico").value;
+  const cliente=db.clientes.find(c=>c.id===clienteId);
+  const servico=db.servicos.find(s=>s.id===servicoId);
+
+  if(!clienteId){
+    alert("Selecione a cliente.");
+    return;
+  }
+
+  if(!document.getElementById("editHora").value){
+    alert("Informe o horário.");
+    return;
+  }
+
+  ag.clienteId=clienteId;
+  ag.servicoId=servicoId;
+  ag.hora=document.getElementById("editHora").value;
+  ag.valor=Number(document.getElementById("editValor").value)||0;
+  ag.confirmado=document.getElementById("editConfirmacao").value==="true";
+  ag.pago=document.getElementById("editPagamento").value==="true";
+  ag.formaPagamento=document.getElementById("editFormaPagamento").value;
+  ag.observacoes=document.getElementById("editObservacoes").value.trim();
+  ag.nome=cliente?cliente.nome:"";
+  ag.servicoNome=servico?servico.nome:"";
+
+  await save();
+
+  fecharModal();
+  renderAgenda();
   renderFinanceiro();
 }
 
