@@ -1639,9 +1639,12 @@ function agendaHTML(a,index){
         </span>
 
         <span class="badge ${a.pago?"yes":"no"}">
-          ${a.pago?
-            "Pago":
-            "Pendente"
+          ${
+            a.pago
+              ? (a.formaPagamento
+                  ? `Pago - ${esc(a.formaPagamento)}`
+                  : "Pago")
+              : "Pendente"
           }
         </span>
 
